@@ -38,16 +38,14 @@
 #define RADIO_TECH   WALTER_MODEM_RAT_LTEM
 
 // --- Known WiFi Networks (synced from cyberdeck) ---
+// Replace these with your own network credentials before flashing.
 struct KnownNetwork {
   const char* ssid;
   const char* password;
 };
 
 KnownNetwork knownNetworks[] = {
-  {"jb-wifi7",              "Dragon@123!@#"},
-  {"GetOffMyLAN",           "Granger1!"},
-  {"Silence_of_the_LANs",   "Granger1!"},
-  {"DropItLikeItsHotspot",  ""},
+  {"YOUR_SSID_HERE",        "YOUR_PASSWORD_HERE"},
 };
 const int numNetworks = sizeof(knownNetworks) / sizeof(KnownNetwork);
 
