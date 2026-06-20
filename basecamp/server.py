@@ -122,8 +122,13 @@ class MQTTBridge:
         self.client.on_message = self._on_message
 
     def connect(self):
-        self.client.connect(MQTT_BROKER, MQTT_PORT, 60)
-        self.client.loop_start()
+        """Connect to MQTT broker. Non-fatal if it fails."""
+        try:
+            self.client.connect(MQTT_BROKER, MQTT_PORT, 60)
+            self.client.loop_start()
+        except Exception as e:
+            print(f"[MQTT] WARNING: Could not connect to {MQTT_BROKER}:{MQTT_PORT} — {e}", flush=True)
+            print("[MQTT] Dashboard will run without MQTT bridge. Fix broker config and restart.", flush=True)
 
     def _broadcast(self, msg_json: str):
         """Thread-safe broadcast to all WebSocket clients."""
