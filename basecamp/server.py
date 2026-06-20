@@ -1053,14 +1053,52 @@ const SESSION_TOKEN = "__SESSION_TOKEN__";
 const wsScheme = location.protocol === 'https:' ? 'wss:' : 'ws:';
 const ws = new WebSocket(wsScheme + '//' + location.host + '/ws?token=' + SESSION_TOKEN);
 
+// --- Fallback: poll for data if WS fails (ad blockers, proxy issues) ---
+let wsActive = false;
+let pollTimer = null;
+
+function startPolling() {
+  if (pollTimer) return;
+  console.log('[FALLBACK] WS failed, starting API polling');
+  pollTimer = setInterval(pollDeviceData, 5000);
+  pollDeviceData(); // immediate
+}
+
+function stopPolling() {
+  if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+}
+
+function pollDeviceData() {
+  if (!selectedMac) return;
+  api(`/api/devices/${selectedMac}/events?limit=1`)
+    .then(r => r.json())
+    .then(events => {
+      if (events && events.length > 0) {
+        const e = events[0];
+        const data = JSON.parse(e.payload);
+        data._topic_type = e.event_type;
+        data._mac = e.mac;
+        data._ts = e.ts;
+        data._source = 'poll';
+        handleMessage(data);
+      }
+    })
+    .catch(() => {});
+}
+
 ws.onopen = () => {
+  wsActive = true;
   document.getElementById('ws-dot').className = 'dot green';
   document.getElementById('ws-status').textContent = 'WS: connected';
   addConsoleLine('--', 'system', 'WebSocket connected');
+  stopPolling();
 };
 ws.onclose = () => {
+  wsActive = false;
   document.getElementById('ws-dot').className = 'dot red';
   document.getElementById('ws-status').textContent = 'WS: disconnected';
+  addConsoleLine('--', 'system', 'WebSocket disconnected — using polling fallback');
+  startPolling();
 };
 ws.onerror = () => {
   document.getElementById('ws-dot').className = 'dot red';
@@ -1070,6 +1108,9 @@ ws.onmessage = (event) => {
   const data = JSON.parse(event.data);
   handleMessage(data);
 };
+
+// Start polling after 3s if WS hasn't connected
+setTimeout(() => { if (!wsActive) startPolling(); }, 3000);
 
 // --- API helper: uses XMLHttpRequest to bypass Chromium credential-URL fetch restriction ---
 function api(url, opts) {
