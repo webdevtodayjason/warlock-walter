@@ -1,0 +1,30 @@
+# Dependencies
+.pio
+.vscode
+*.bin
+*.elf
+*.map
+
+# Build artifacts
+build/
+*/build/
+sim_diagnostic/build/
+
+# Database
+*.db
+*.db-journal
+__pycache__/
+*.pyc
+
+# Secrets
+.api_keys
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+*.swp
+*.swo
+*~

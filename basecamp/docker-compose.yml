@@ -1,0 +1,43 @@
+version: "3.8"
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    restart: unless-stopped
+    ports:
+      - "8883:8883"
+      - "1883:1883"
+    volumes:
+      - mosquitto_config:/mosquitto/config
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+    networks:
+      - warlock-net
+
+  basecamp:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      - mosquitto
+    environment:
+      - MQTT_BROKER=mosquitto
+      - MQTT_PORT=1883
+      - OPERATOR_USER=admin
+      - OPERATOR_PASS=warlock-c2-change-me
+      - BASECAMP_DB=/data/basecamp.db
+    volumes:
+      - basecamp_data:/data
+    ports:
+      - "8000"
+    networks:
+      - warlock-net
+
+volumes:
+  mosquitto_config:
+  mosquitto_data:
+  mosquitto_log:
+  basecamp_data:
+
+networks:
+  warlock-net:
+    driver: bridge
